@@ -1,45 +1,20 @@
+import os
 from aiogram import Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from keyboard import get_function_keyboard, get_answer_after_primer
+from loguru import logger
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
+TOKEN = os.getenv("TOKEN")
 
 
-<<<<<<< HEAD
-def run_bot():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler("bot.log"),
-            logging.StreamHandler()
-        ]
-    )
-    logger = logging.getLogger(__name__)
-
-    load_dotenv(find_dotenv())
-    TOKEN = os.getenv("TOKEN")
-
-    if not TOKEN:
-        logger.error("Токен бота не найден! Проверьте файл .env")
-        exit(1)
-
-@dp.message(Command('start'))
-async def cmd_start(message: types.Message):
-    user_name = message.from_user.first_name
-    welcome_text = (
-        f"🔢 Привет, {user_name}! Я — бот-калькулятор. 🧮\n\n"
-        "Просто напиши мне математическое выражение \
-        (например, '2+2', '5*3' или '10/2'), "
-        "и я мгновенно решу его! 😊\n\n"
-    )
-    await message.answer(welcome_text)
-=======
 class Form(StatesGroup):
     first_number = State()
     second_number = State()
->>>>>>> 0594479b7a1725ada18d9b19826f4a0306e34930
 
 
 def numbers(dp: Dispatcher):
