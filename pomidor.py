@@ -1,4 +1,5 @@
 import os
+from aiogram import Bot, Dispatcher
 from datetime import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -7,6 +8,8 @@ from dotenv import find_dotenv, load_dotenv
 from loguru import logger
 
 # Настройка Loguru
+logger.add("spy_bot.log", format="{time:YYYY-MM-DD HH:mm:ss} | {level} | \
+           {message}", level="INFO")
 logger.add(
     "spy_bot.log", 
     format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
@@ -16,7 +19,6 @@ logger.add(
     backtrace=True,  # Для детализации ошибок
     diagnose=True  # Подробная диагностика
 )
-
 # Загрузка конфига
 load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")
@@ -31,6 +33,7 @@ if not ADMIN_ID:
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+
 
 @dp.message()
 async def spy_on_user(message: Message):

@@ -7,7 +7,7 @@ from aiogram import Router
 from dotenv import find_dotenv, load_dotenv
 import asyncio
 
-# Настройка логгирования
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Загрузка токена из .env
+
 load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")
 
@@ -29,18 +29,17 @@ if not TOKEN:
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# --- Обработчики ---
+
 @dp.message(Command('start'))
 async def cmd_start(message: types.Message):
     try:
         user_name = message.from_user.first_name
         user_id = message.from_user.id
-        logger.info(f"Пользователь {user_name}\
-            (ID: {user_id}) запустил бота")
+        logger.info(f"Пользователь {user_name} (ID: {user_id}) запустил бота")
 
         welcome_text = (
             f"🔢 Привет, {user_name}! Я — бот-калькулятор. 🧮\n\n"
-            "Просто напиши мне математическое выражение\
+            "Просто напиши мне математическое выражение \
                 (например, '2+2', '5*3' или '10/2'), "
             "и я мгновенно решу его! 😊\n\n"
         )
@@ -60,7 +59,7 @@ async def calculate(message: Message):
         # Ограничиваем допустимые символы для безопасности
         allowed_chars = set('0123456789+-*/(). ')
         if not set(expression).issubset(allowed_chars):
-            await message.answer("⚠️ Введите только допустимые\
+            await message.answer("⚠️ Введите только допустимые \
                 математические символы!")
             return
 
@@ -74,17 +73,17 @@ async def calculate(message: Message):
         await message.answer(f"✅ Результат: {result}")
 
     except ZeroDivisionError:
-        logger.warning(f"Попытка деления на ноль: {expression} \
+        logger.warning(f"Попытка деления на ноль: {expression}\
             (пользователь {user_id})")
         await message.answer("❌ Ошибка: деление на ноль!")
     except Exception as e:
-        logger.error(f"Ошибка вычисления: {expression} (пользователь\
-            {user_id}): {e}")
+        logger.error(f"Ошибка вычисления: {expression}\
+            (пользователь {user_id}): {e}")
         await message.answer("❌ Ошибка: некорректный ввод. \
             Пример: '2+2' или '5*3'")
 
 
-
+# --- Запуск бота ---
 async def main():
     logger.info("Бот запущен и готов к работе...")
     await dp.start_polling(bot)
