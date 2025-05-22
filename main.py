@@ -1,68 +1,34 @@
-import os
 import asyncio
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import CommandStart
-from dotenv import find_dotenv, load_dotenv
+import os
+from loguru import logger
+from dotenv import load_dotenv, find_dotenv
+from aiogram import Bot, Dispatcher
+from chat import numbers
+
+
+dp = Dispatcher()
 
 load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")
 
-bot = Bot(TOKEN)
-dp = Dispatcher()
 
+async def main1():
+    logger.add("file.log",
+               format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
+               rotation="3 days",
+               backtrace=True,
+               diagnose=True)
 
-@dp.message(CommandStart())
-async def start_cmd(message: types.Message):
-    await message.answer("Привет! Я Камкулятор 🧮\nОтправь мне \
-        выражение, например: `5 + 3`")
-
-
-@dp.message()
-async def calculate(message: types.Message):
+    bot = Bot(token=os.getenv('TOKEN'))
+    dp = Dispatcher()
     try:
-        # Разбиваем входное сообщение на части
-        parts = message.text.split()
-        if len(parts) != 3:
-            await message.answer("Ошибка: Неверный \
-                формат!\nИспользуйте формат: число \
-                    оператор число\nНапример: `5 + 3`")
-            return
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
+        logger.info("Бот остановлен")
 
-        num1 = float(parts[0])
-        operator = parts[1]
-        num2 = float(parts[2])
-
-        # Проверяем допустимость оператора
-        if operator not in ['+', '-', '*', '/']:
-            await message.answer("Ошибка: Неверный \
-                оператор!\nДоступные операторы: +, -, *, /")
-            return
-
-        # Выполняем вычисление
-        if operator == '+':
-            result = num1 + num2
-        elif operator == '-':
-            result = num1 - num2
-        elif operator == '*':
-            result = num1 * num2
-        elif operator == '/':
-            if num2 == 0:
-                await message.answer("Ошибка: Деление на ноль запрещено!")
-                return
-            result = num1 / num2
-
-        # Отправляем результат
-        await message.answer(f"{num1} {operator} {num2} = {result}")
-
-    except ValueError:
-        await message.answer("Ошибка: Пожалуйста, введите корректные числа!")
-    except Exception as e:
-        await message.answer("Произошла ошибка. Попробуй ещё раз.")
-        print(e)
+    numbers(dp)
 
 
-async def main():
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+if __name__ == '__main1__':
+    asyncio.run(main1())
