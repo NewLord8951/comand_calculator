@@ -1,44 +1,33 @@
-from telegram import Update
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    filters,
-    ContextTypes,
-    ConversationHandler
-)
-from handler import start, handle_message
-from chat import start_calc, calculate, cancel
-import logging
+import asyncio
+import os
+from loguru import logger
+from dotenv import load_dotenv, find_dotenv
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from chat import calculator
 
-# Настройка логгирования
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO,
-    filename='bot.log'
-)
-logger = logging.getLogger(__name__)
+load_dotenv(find_dotenv())
+TOKEN = os.getenv("TOKEN")
+
 
 async def main():
-    # Замените 'YOUR_BOT_TOKEN' на ваш токен
-    application = Application.builder().token("YOUR_BOT_TOKEN").build()
+    logger.add("file.log",
+               format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
+               rotation="3 days",
+               backtrace=True,
+               diagnose=True)
 
-    # Обработчики команд
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(
-        ConversationHandler(
-            entry_points=[CommandHandler('calc', start_calc)],
-            states={
-                0: [MessageHandler(filters.TEXT & ~filters.COMMAND, calculate)],
-            },
-            fallbacks=[CommandHandler('cancel', cancel)]
-        )
-    )
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+    dp = Dispatcher()
 
-    # Запуск бота
-    await application.run_polling()
+    calculator(dp)
+
+    logger.info("Бот запущен")
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
+        logger.info("Бот остановлен")
 
 if __name__ == '__main__':
-    import asyncio
     asyncio.run(main())
