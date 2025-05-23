@@ -1,9 +1,5 @@
-#-Виртуальное окружение
-.venv
-.env
-
-# python
-__pycache__
-
-# files
+.venv/
+__pycache__/
+*.pyc
 *.log
+.env
