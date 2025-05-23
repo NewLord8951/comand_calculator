@@ -1,28 +1,38 @@
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
-from aiogram.types import ReplyKeyboardMarkup
-from aiogram.utils import executor
-from keyboard import calc_keyboard
+from aiogram.filters import Command
+from aiogram.types import Message
+from aiogram.utils.executor import Executor
 import re
+import logging
 
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Инициализация бота
 bot = Bot(token="YOUR_BOT_TOKEN")
 dp = Dispatcher(bot)
 
-
-async def start(message: types.Message):
+# Обработчик команды /start
+@dp.message_handler(Command("start"))
+await message.answer("...", reply_markup=calc_keyboard)
+async def start(message: Message):
     user = message.from_user
+    await message.answer("...", reply_markup=calc_keyboard)
     await message.answer(
         f"Привет {user.first_name}! Я бот-калькулятор.\n"
         "Отправь мне математическое выражение или используй клавиатуру.\n"
         "Доступные команды:\n"
         "/calc - расширенный режим калькулятора",
-        reply_markup=ReplyKeyboardMarkup(keyboard=calc_keyboard, resize_keyboard=True)
     )
 
-
-async def handle_message(message: types.Message):
+# Обработчик обычных сообщений
+@dp.message_handler()
+async def handle_message(message: Message):
     text = message.text
 
+    # Обработка специальных команд
     if text == 'C':
         await message.answer("Очищено. Введите новое выражение.")
         return
@@ -32,14 +42,17 @@ async def handle_message(message: types.Message):
         return
 
     try:
-        cleaned_text = re.sub(r'[^\d+\-*/(). ]', '', text)
-        result = eval(cleaned_text)
+        # Безопасная проверка ввода
+        if not re.match(r'^[\d+\-*/().\s]+$', text):
+            raise ValueError("Недопустимые символы в выражении")
+            
+        result = eval(text)
         await message.answer(f"Результат: {result}")
     except Exception as e:
+        logger.error(f"Ошибка вычисления: {e}")
         await message.answer(f"Ошибка: {e}\nПопробуйте еще раз.")
 
-dp.register_message_handler(start, commands=['start'])
-dp.register_message_handler(handle_message)
-
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    # Запуск бота
+    executor = Executor(dp)
+    executor.start_polling()
