@@ -1,37 +1,51 @@
-from telegram import Update, ReplyKeyboardRemove
-from telegram.ext import ContextTypes, MessageHandler, filters
+from aiogram import Dispatcher, types
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 import re
 
 
-def calculator(dp):
-    async def start_calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text(
-            "📟 Расширенный режим калькулятора. Введите выражение:",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        return 0
+class CalcStates(StatesGroup):
+    CALCULATING = State()
 
-    async def calculate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        text = update.message.text
-        try:
-            cleaned_text = re.sub(r'[^\d+\-*/(). ]', '', text)
-            result = eval(cleaned_text)
-            await update.message.reply_text(
-                f"✅ Результат: {result}\n\nВведите новое выражение или /cancel для выхода."
-            )
-            return 0
-        except Exception as e:
-            await update.message.reply_text(
-                f"❌ Ошибка: {e}\nПопробуйте еще раз или /cancel для выхода."
-            )
-            return 0
 
-    async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        from keyboard import calc_keyboard
-        from telegram import ReplyKeyboardMarkup
-        
-        await update.message.reply_text(
-            "🚪 Выход из расширенного режима.",
-            reply_markup=ReplyKeyboardMarkup(calc_keyboard, resize_keyboard=True)
+async def start_calc(message: types.Message, state: FSMContext):
+    await message.answer(
+        "📟 Расширенный режим калькулятора. Введите выражение:",
+        reply_markup=types.ReplyKeyboardRemove()
+    )
+    await state.set_state(CalcStates.CALCULATING)
+
+
+async def calculate(message: types.Message, state: FSMContext):
+    text = message.text
+    try:
+        cleaned_text = re.sub(r'[^\d+\-*/().^%&| ]', '', text)
+        safe_dict = {k: v for k, v in globals().items() if k in dir(__builtins__) or k in dir(math)}
+        result = eval(cleaned_text, {"__builtins__": None}, safe_dict)
+        await message.answer(
+            f"✅ Результат: {result}\n\nВведите новое выражение или /cancel для выхода."
         )
-        return ConversationHandler.END
+    except Exception as e:
+        await message.answer(
+            f"❌ Ошибка: {e}\nПопробуйте еще раз или /cancel для выхода."
+        )
+
+
+async def cancel(message: types.Message, state: FSMContext):
+    from keyboard import calc_keyboard
+
+    await message.answer(
+        "🚪 Выход из расширенного режима.",
+        reply_markup=types.ReplyKeyboardMarkup(
+            keyboard=calc_keyboard,
+            resize_keyboard=True
+        )
+    )
+    await state.clear()
+
+
+def setup_calculator(dp: Dispatcher):
+    dp.message.register(start_calc, Command("calc"))
+    dp.message.register(cancel, Command("cancel"), CalcStates.CALCULATING)
+    dp.message.register(calculate, CalcStates.CALCULATING)
